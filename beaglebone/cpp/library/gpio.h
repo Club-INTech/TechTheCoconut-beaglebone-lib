@@ -1,3 +1,7 @@
+/** @file gpio.h
+ *  @brief File for handling GPIOs of the Beaglebone
+ */
+
 //Copyright 2012 Philippe Tillet
 //This file is part of BeagleLib
 //BeagleLib is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
@@ -15,6 +19,10 @@
 
 namespace BeagleLib{
   
+  /**
+   * @enum GPIO_NAME
+   * @brief Names of the GPIO pins
+   */
   enum GPIO_NAME{
     USR0,
     USR1,
@@ -58,12 +66,30 @@ namespace BeagleLib{
     GPIO3_21,
   };
   
+  /**
+   * @enum GPIO_MODE
+   * @brief Modes for the GPIO Pins
+   */
   enum GPIO_MODE{
     INPUT,
     OUTPUT,
     PWM
   };
-      
+  
+  /**
+  * @enum PULL
+  * @brief PULL Modes for the GPIOs
+  */
+  enum PULL{
+     PULLUP,
+     PULLDOWN,
+     NOPULL
+   };
+   
+  /**
+  * @enum DigitalState
+  * @brief States of a Digital Pin.
+  */
   enum DigitalState{
     LOW = 0,
     HIGH = 1
@@ -84,11 +110,7 @@ namespace BeagleLib{
     GPIO3 = 0x481ae000-MMAP_OFFSET
    };
    
-   enum PULL{
-     PULLUP,
-     PULLDOWN,
-     NOPULL
-   };
+
    
    enum GPIO_BITS{
     CONF_SLEW_SLOW    = 1<<6,
@@ -111,7 +133,11 @@ namespace BeagleLib{
    
   static const std::map<GPIO_NAME, GPIO_Descriptor> make_gpio_map();
   static const std::map<GPIO_NAME,GPIO_Descriptor> GPIOs;
-      
+  
+  /** @class GPIO
+   *  @brief Class for the GPIO Pins
+   *  @tparam mode Mode from the enum GPIO_MODE
+   */
   template<GPIO_MODE mode>
   class GPIO;
   
