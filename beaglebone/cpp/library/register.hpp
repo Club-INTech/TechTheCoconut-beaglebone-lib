@@ -18,6 +18,11 @@
 
 namespace BeagleLib{
 
+    int get_fd_mem(){
+      static int fd = open("/dev/mem",O_RDWR);
+      return fd;
+    }
+
     static const unsigned int MMAP_OFFSET = 0x44c00000 ;
     static const unsigned int MMAP_SIZE   = 0x48ffffff-MMAP_OFFSET;
 
@@ -51,13 +56,12 @@ namespace BeagleLib{
     }
 
     void set_reg(uint32_t address, uint32_t new_value){
-      int fd = open("/dev/mem",O_RDWR);
-      void* map;
-      if (fd == -1) {
+      uint32_t* map;
+      if (get_fd_mem() == -1) {
 	    perror("Error opening file for writing");
 	    exit(EXIT_FAILURE);
       }
-      map = mmap(0, MMAP_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, MMAP_OFFSET);
+      map = (uint32_t *)mmap(0, MMAP_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, get_fd_mem(), MMAP_OFFSET);
       uint32_t* reg = (uint32_t*)(map+address);
       to_little_endian(new_value);
       *reg = new_value;
@@ -65,13 +69,12 @@ namespace BeagleLib{
 
 
     uint32_t get_reg(uint32_t address){
-      int fd = open("/dev/mem",O_RDWR);
-      void* map;
-      if (fd == -1) {
+      uint32_t* map;
+      if (get_fd_mem() == -1) {
 	    perror("Error opening file for writing");
 	    exit(EXIT_FAILURE);
       }
-      map = mmap(0, MMAP_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, MMAP_OFFSET);
+      map = (uint32_t *) mmap(0, MMAP_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, get_fd_mem(), MMAP_OFFSET);
       uint32_t* reg = (uint32_t*)(map+address);
       to_little_endian(*reg);
       return *reg;
@@ -96,7 +99,7 @@ namespace BeagleLib{
     void pin_mux(std::string const & fn, unsigned int mode){
       std::string path = "/sys/kernel/debug/omap_mux/";
       path+=fn;
-      std::ofstream f(path);
+      std::ofstream f(path.c_str());
       if(!f){
 	std::cerr << "Error Opening " << path << std::endl;
 	return;

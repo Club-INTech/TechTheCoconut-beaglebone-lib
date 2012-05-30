@@ -9,7 +9,7 @@
 
 namespace BeagleLib{
 
-  const std::map<GPIO_NAME, GPIO_Descriptor> make_gpio_map(){
+  std::map<GPIO_NAME, GPIO_Descriptor> make_gpio_map(){
     std::map<GPIO_NAME, GPIO_Descriptor> res;
     res[USR0] = (struct GPIO_Descriptor){GPIO1, 1<<22,		   "gpmc_a5"};
     res[USR1] = (struct GPIO_Descriptor){GPIO1, 1<<22,           "gpmc_a6"};
@@ -54,18 +54,23 @@ namespace BeagleLib{
     return res;
   }
 
-  const std::map<GPIO_NAME,GPIO_Descriptor> GPIOs = make_gpio_map();
-
-  GPIO< INPUT >::GPIO(GPIO_NAME name, PULL PullMode = PULLDOWN) : name_(name)
+  //////////////////////////////////////
+  // Input GPIO Pins
+  /////////////////////////////////////
+  
+  GPIO< INPUT >::GPIO(GPIO_NAME name, PULL PullMode) : name_(name)
   {
     unsigned int pull = 0;
+    //Configure pull-up
     if(PullMode == PULLUP){
       pull = CONF_PULLUP;
     }
     else if(PullMode == NOPULL){
       pull = CONF_PULL_DISABLE;
     }
+    //Configure multiplexer
     pin_mux(GPIOs[name_].pinmux_filename, CONF_GPIO_INPUT|pull);
+    //Set pin as input.
     or_reg(GPIOs[name_].mux+GPIO_OE, GPIOs[name_].bit_value);
   }
 
@@ -76,6 +81,11 @@ namespace BeagleLib{
     }
     return LOW;
   }
+  
+  
+  //////////////////////////////////////
+  // Output GPIO Pins
+  /////////////////////////////////////
 
   GPIO< OUTPUT >::GPIO(GPIO_NAME name) : name_(name)
   {

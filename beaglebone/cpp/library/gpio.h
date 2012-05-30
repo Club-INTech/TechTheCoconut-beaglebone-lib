@@ -119,7 +119,7 @@ namespace BeagleLib{
     CONF_PULL_DISABLE = 1<<3
    };
 
-  enum GPIO_MODE{
+  enum CONF_GPIO{
     CONF_GPIO_MODE    = 0x07,
     CONF_GPIO_OUTPUT = CONF_GPIO_MODE,
     CONF_GPIO_INPUT  = CONF_GPIO_MODE+CONF_RX_ACTIVE
@@ -131,8 +131,8 @@ namespace BeagleLib{
     std::string pinmux_filename;
    };
    
-  static const std::map<GPIO_NAME, GPIO_Descriptor> make_gpio_map();
-  static const std::map<GPIO_NAME,GPIO_Descriptor> GPIOs;
+  std::map<GPIO_NAME, GPIO_Descriptor> make_gpio_map();
+  static std::map<GPIO_NAME,GPIO_Descriptor> GPIOs = make_gpio_map();
   
   /** @class GPIO
    *  @brief Class for the GPIO Pins
@@ -156,7 +156,7 @@ namespace BeagleLib{
   private:
       GPIO_NAME name_;  
   public:
-      GPIO(GPIO_NAME name, PULL PullMode);
+      GPIO(GPIO_NAME name, PULL PullMode = PULLDOWN);
       DigitalState read();
   };
 
