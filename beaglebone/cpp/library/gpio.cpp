@@ -5,7 +5,7 @@
 //You should have received a copy of the GNU General Public License along with BeagleLib. If not, see http://www.gnu.org/licenses/.
 
 #include "gpio.h"
-#include "register.hpp"
+#include "register.h"
 
 namespace BeagleLib{
 
