@@ -1,1 +1,1 @@
-rsync -arvuz ./Code -e ssh intech@157.159.42.46:. --exclude '.git'
+rsync -arvuz ./Code -e ssh intech@157.159.42.46:. --exclude '.git' --exclude 'build'

@@ -16,6 +16,7 @@
 #include <string>
 #include <fstream>
 #include <iostream>
+#include <cmath>
 
 namespace BeagleLib{
 
@@ -23,7 +24,7 @@ namespace BeagleLib{
 
     static const unsigned int MMAP_OFFSET = 0x44c00000 ;
     static const unsigned int MMAP_SIZE   = 0x48ffffff-MMAP_OFFSET;
-
+    static const unsigned int ROUND_MMAP_SIZE = ceil((float)MMAP_SIZE/(float)getpagesize())*getpagesize();
     int is_big_endian(void);
 
     inline void endian_swap(uint32_t& x);
