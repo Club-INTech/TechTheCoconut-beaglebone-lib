@@ -16,6 +16,28 @@
 
 namespace BeagleLib{
 
+    MMapHandler::MMapHandler()
+    {
+	fd_ = open("/dev/mem",O_RDWR);
+	if (fd_ == -1) {
+	      perror("Error opening file for writing");
+	      exit(EXIT_FAILURE);
+	}
+	map_ = (uint8_t *)mmap(0, MMAP_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd_, MMAP_OFFSET);
+	if(map_ == MAP_FAILED){
+	      perror("Map Initialisation Failed.");
+	      exit(EXIT_FAILURE);
+	}
+    }
+    
+    MMapHandler::~MMapHandler()
+    {
+	    munmap ((void *)map_, MMAP_SIZE);
+	    close(fd_);
+    }
+
+    static MMapHandler mmap;
+    
     int is_big_endian(void){
 	union {
 	    uint32_t i;
@@ -44,39 +66,17 @@ namespace BeagleLib{
 	endian_swap(x);
       }
     }
-
+    
     void set_reg(uint32_t address, uint32_t new_value){
-      int fd = open("/dev/mem",O_RDWR);
-      if (fd == -1) {
-	    perror("Error opening file for writing");
-	    exit(EXIT_FAILURE);
-      }
-      uint8_t* map = (uint8_t *)mmap(0, MMAP_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, MMAP_OFFSET);
-      if(map == MAP_FAILED){
-	std::cerr << "Map Initialisation Failed." << std::endl;
-      }
-      uint32_t* reg = (uint32_t*)(map+address);
+      uint32_t* reg = (uint32_t*)(mmap.get()+address);
       to_little_endian(new_value);
       *reg = new_value;
-      munmap ((void *)map, MMAP_SIZE);
-      close(fd);
     }
 
 
     uint32_t get_reg(uint32_t address){
-      int fd = open("/dev/mem",O_RDWR);
-      if (fd == -1) {
-	    perror("Error opening file for writing");
-	    exit(EXIT_FAILURE);
-      }
-      uint8_t* map = (uint8_t*) mmap(0, MMAP_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, MMAP_OFFSET);
-      if(map == MAP_FAILED){
-	std::cerr << "Map Initialisation Failed." << std::endl;
-      }
-      uint32_t reg = *((uint32_t*)(map+address));
+      uint32_t reg = *((uint32_t*)(mmap.get()+address));
       to_little_endian(reg);
-      munmap ((void *)map, MMAP_SIZE);
-      close(fd);
       return reg;
     }
     

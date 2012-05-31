@@ -20,31 +20,31 @@
 
 namespace BeagleLib{
 
-    int get_fd_mem();
 
-    static const unsigned int MMAP_OFFSET = 0x44c00000 ;
-    static const unsigned int MMAP_SIZE   = 0x48ffffff-MMAP_OFFSET;
-    static const unsigned int ROUND_MMAP_SIZE = ceil((float)MMAP_SIZE/(float)getpagesize())*getpagesize();
+     static const unsigned int MMAP_OFFSET = 0x44c00000 ;
+     static const unsigned int MMAP_SIZE   = 0x48ffffff-MMAP_OFFSET;
+       
+    class MMapHandler{
+    private:
+       int fd_;
+       uint8_t* map_;
+    public:
+      MMapHandler();
+      uint8_t * get(){ return map_; }
+      ~MMapHandler();
+    };
+    
     int is_big_endian(void);
-
     inline void endian_swap(uint32_t& x);
-
     inline void to_little_endian(uint32_t& x);
-
     inline void to_big_endian(uint32_t& x);
-
+    
     void set_reg(uint32_t address, uint32_t new_value);
-
     uint32_t get_reg(uint32_t address);
-    
     void or_reg(uint32_t address, uint32_t mask);
-    
     void and_reg(uint32_t address, uint32_t mask);
-    
     void xor_reg(uint32_t address, uint32_t mask);
-    
     void clear_reg(uint32_t address, uint32_t mask);
-    
     void pin_mux(std::string const & fn, unsigned int mode);
 }
 #endif
