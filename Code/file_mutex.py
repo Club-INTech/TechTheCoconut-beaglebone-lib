@@ -1,13 +1,13 @@
 # -*- coding:utf-8 -*-
 
-# Convention : Mutex à 1 <-> PAS POSSIBLE D'ECRIRE.
-
 from threading import Lock
 
 # Classe de mutex de file
+# Cette classe contient un dictionnaire de mutex, un pour chaque
+# fichier ouvert.
 class MutexFile :
     def __init__(self):
-        # Dictionnaire type "nomFichier" = MutexOk/PasOk
+        # Dictionnaire type {"nomFichier" : Mutex}
         if not hasattr(MutexFile, "mutex") :
             MutexFile.mutex = {}
             
@@ -28,7 +28,79 @@ class MutexFile :
         MutexFile.mutex[nom].acquire()
     def release(self, nom) :
         MutexFile.mutex[nom].release()
+
+#--------------------------------------------------------------------------------#
+#-----------------------------    CLASSE File    --------------------------------#
+#--------------------------------------------------------------------------------#
+'''
+    Auteur  : Thibaut REMY aka. ~MissFrance~
+    Date    : 02 juin 2012
     
+    ATTRIBUTS :
+    
+         ---------------------------------------------- D'instance --------------------------------------------------
+        
+                self.nom        : nom du fichier à ouvrir.
+                self.fichier    : objet de type file.
+                
+        ------------------------------------------------ De classe --------------------------------------------------
+        
+                File.mutex      : Instanciation de la classe MutexFile
+                File.pattern    : "\n" ou autre. Pattern de fin de message.
+
+    __________________________________________________________________________________________________________________
+    
+    MÉTHODES :
+    
+        ------------------------------------------- Fonctions haut niveau -------------------------------------------
+        __init__ ( nom ; deleteAll = True) :
+                Méthode appellée à l'initialisation du fichier File.
+                Cette méthode ouvre aussi le fichier en mode "w+" ou "a+" (w+ si le fichier doit être écrasé)
+                
+                nom         : nom du fichier.
+                deleteAll   : mettre à True si le contenu doit être effacé lors de la première instanciation de ce fichier.
+                              mettre à False sinon.
+                              
+        write   ( message ; noRepetition = True) :
+                Méthode utilisée pour écrire une ligne dans un fichier (à la fin de celui-ci)
+                Cette méthode utilise un mutex (si son mutex n'est pas accessible, la fonction est bloquante jusqu'à ce qu'il
+                       soit accessible)
+                       
+                message     : Message à écrire (sans \n please)
+                noRepetition: Lorsque mis à True, le message ne sera pas écrit si il existe déjà dans le fichier.
+                
+        remove  (message) :
+                Méthode utilisée pour enlever une ou plusieurs lignes d'un fichier.
+                Cette méthode utilise un mutex (si son mutex n'est pas accessible, la fonction est bloquante jusqu'à ce qu'il
+                       soit accessible)
+                       
+                message : ligne(s) à enlever du fichier.
+                
+        clean () :
+                Cette méthode enlève les doublons (i.e. les lignes en double) ainsi que les lignes vides dans le fichier.
+                Cette méthode utilise un mutex (si son mutex n'est pas accessible, la fonction est bloquante jusqu'à ce qu'il
+                       soit accessible)
+                 
+        close () :
+                Ferme définitivement le fichier.
+                
+        ------------------------------------------------ Fonctions bas-niveau ---------------------------------------------
+        
+        readlines () :
+                Méthode utilisée pour récupérer chaque lignes du fichier.
+                /!\ Cette méthode n'utilise pas de mutex. Elle n'est donc pas sensée être utilisée seule.
+                
+                RETOURNE : Liste de string qui composent les lignes du fichier (sans les '\n')
+                
+        writelines (lines) :
+                Méthode utilisée pour écrire des lignes dans le fichier. Le fichier sera écrasé.
+                /!\ Cette méthode n'utilise pas de mutex. Elle n'est donc pas sensée être utilisée seule.
+                
+                lines   : liste de string qui composeront les lignes du fichier (sans les "\n")
+                
+                
+
+'''
 class File :
     # L'argument deleteAll détermine si oui ou non on veut supprimer les données
     # contenues dans le fichier avant utilisation. (ne peut se faire que pour la
@@ -37,7 +109,6 @@ class File :
         if not hasattr(File, "mutex") :
             File.mutex = MutexFile()
             File.pattern = "\n"
-            File.timeout = 1 #second
         
         self.nom = nom
         
@@ -46,7 +117,6 @@ class File :
             dejaOuvert = File.mutex.addMutex(self.nom)
             if (not dejaOuvert) and deleteAll: 
                 self.fichier = open(self.nom, "w+")
-                print "Opening in Delete Mode"
             else :
                 self.fichier = open(self.nom, "a+")
             
