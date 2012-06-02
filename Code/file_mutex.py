@@ -42,9 +42,10 @@ class File :
         try :
             dejaOuvert = File.mutex.addMutex(self.nom)
             if (not dejaOuvert) and deleteAll: 
-                self.fichier = open(self.nom, "w")
+                self.fichier = open(self.nom, "w+")
+                print "Opening in Delete Mode"
             else :
-                self.fichier = open(self.nom, "a")
+                self.fichier = open(self.nom, "a+")
             
         except :
             print "Impossible d'ouvrir le fichier " + nom + "."
@@ -64,6 +65,37 @@ class File :
             self.fichier.flush()
             # On remet le mutex à False
             File.mutex.setMutex(self.nom, False)
+    
+    # Permet d'enlever le message "message" du fichier.
+    def remove(self, message) :
+        linesToDelete = []
+        
+        # On checke le Mutex: 
+        if not File.mutex.getMutex(self.nom) :
+            File.mutex.setMutex(self.nom, True)
+            # On remonte au début du fichier
+            self.fichier.seek(0)
+            
+            lines = self.fichier.readlines()
+            # On cherche les lignes où apparaît le message :
+            for i in range(len(lines)) :
+                if lines[i] == (message + "\n") :
+                    linesToDelete.append(i - len(linesToDelete))
+                    
+            # on détruit ces lignes :
+            for i in range(len(linesToDelete)) :
+                print "Destruction de la ligne n°"+str(linesToDelete[i])
+                del lines[linesToDelete[i]]
+                print lines
+                
+            # On réécrit le fichier
+            self.fichier.seek(0)
+            self.fichier.truncate(0)
+            self.fichier.writelines(lines)
+            self.fichier.flush()
+                
+            File.mutex.setMutex(self.nom, False)
+            
             
     def close(self) :
         self.fichier.close()
