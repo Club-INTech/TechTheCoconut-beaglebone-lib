@@ -4,6 +4,7 @@
 
 from time import clock
 
+
 # Classe de mutex de file
 class MutexFile :
     def __init__(self):
@@ -32,7 +33,7 @@ class MutexFile :
 class File :
     # L'argument deleteAll détermine si oui ou non on veut supprimer les données
     # contenues dans le fichier avant utilisation. (ne peut se faire que pour la
-    # première instance de ce fichier).
+    # première instanciation de ce fichier).
     def __init__(self, nom, deleteAll = True) :
         if not hasattr(File, "mutex") :
             File.mutex = MutexFile()
@@ -63,7 +64,6 @@ class File :
             if not File.mutex.getMutex(self.nom) :
                 
                 lines = self.readlines()
-                print lines
                 # On met le mutex à True
                 File.mutex.setMutex(self.nom, True)
                 
@@ -123,9 +123,7 @@ class File :
                         
                 # on détruit ces lignes :
                 for i in range(len(linesToDelete)) :
-                    print "Destruction de la ligne n°"+str(linesToDelete[i])
                     del lines[linesToDelete[i]]
-                    print lines
                     
                 # On rajoute le pattern à la fin de chaque lignes
                 for i in range(len(lines)) :
@@ -144,6 +142,41 @@ class File :
                 
         print "Timeout dépassé !"
         return False
+        
+    # Proprifie le fichier (i.e. enlève les doublons et les lignes vides)
+    def clean(self) :
+        t0 = clock()
+        # Contient l'indices de lignes à détruire
+        linesToDelete = []
+        # Contient les lignes du fichier mais sans les doublons
+        linesDejaVu   = []
+        
+        while clock() <= t0 + File.timeout :
+            if not File.mutex.getMutex(self.nom) :
+                lines = self.readlines()
+                File.mutex.setMutex(self.nom, True)
+                
+                for i in range(len(lines)) :
+                    if (not lines[i] in linesDejaVu) and lines[i] != "" :
+                        linesDejaVu.append(lines[i])
+                        
+                # On ajoute des "\n" :
+                for i in range(len(linesDejaVu)) :
+                    linesDejaVu[i] += File.pattern
+                
+                # On réécrit le fichier : destruction
+                self.fichier.seek(0)
+                self.fichier.truncate(0)
+                
+                # Puis réécriture
+                self.fichier.writelines(linesDejaVu)
+                self.fichier.flush()
+                
+                File.mutex.setMutex(self.nom, False)
+                return True
+        print "Timeout dépassé !"
+        return False
+        
             
             
     def close(self) :
