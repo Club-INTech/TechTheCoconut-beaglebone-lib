@@ -84,24 +84,29 @@ class File :
         print "Timeout dépassé !"
         return False
         
+    # WARNING cette fonction ne checke pas le mutex. Elle doit donc être
+    # placés à l'intérieur d'un bloc sous l'influence du mutex
     def readlines(self) :
-        t0 = clock()
+        self.fichier.seek(0)
+        lines = self.fichier.readlines()
         
-        while clock() <= t0 + File.timeout :
-            if not File.mutex.getMutex(self.nom):
-                File.mutex.setMutex(self.nom, True)
-                self.fichier.seek(0)
-                lines = self.fichier.readlines()
-                
-                for i in range(len(lines)) :
-                    if lines[i][-1] == File.pattern :
-                        lines[i] = lines[i][0:len(lines[i])-1]
-                File.mutex.setMutex(self.nom, False)
-                return lines
-                
-        print "Timeout dépassé !"
-        return False
-    
+        for i in range(len(lines)) :
+            if lines[i][-1] == File.pattern :
+                lines[i] = lines[i][0:len(lines[i])-1]
+        return lines
+
+    # WARNING cette fonction ne checke pas le mutex. Elle doit donc être
+    # placés à l'intérieur d'un bloc sous l'influence du mutex
+    def writelines(self, lines) :
+        for i in range(len(lines)) :
+            lines[i] = lines[i] + File.pattern
+        
+        self.fichier.seek(0)
+        self.fichier.truncate(0)
+        self.fichier.writelines(lines)
+        self.fichier.flush()
+
+
         
     # Permet d'enlever le message "message" du fichier.
     # Retourne True si le message a bien été enlevé du fichier.
@@ -125,17 +130,7 @@ class File :
                 for i in range(len(linesToDelete)) :
                     del lines[linesToDelete[i]]
                     
-                # On rajoute le pattern à la fin de chaque lignes
-                for i in range(len(lines)) :
-                    lines[i] += File.pattern
-                    
-                # On réécrit le fichier : destruction
-                self.fichier.seek(0)
-                self.fichier.truncate(0)
-                
-                # Puis réécriture
-                self.fichier.writelines(lines)
-                self.fichier.flush()
+                self.writelines(lines)
                     
                 File.mutex.setMutex(self.nom, False)
                 return True
@@ -160,17 +155,7 @@ class File :
                     if (not lines[i] in linesDejaVu) and lines[i] != "" :
                         linesDejaVu.append(lines[i])
                         
-                # On ajoute des "\n" :
-                for i in range(len(linesDejaVu)) :
-                    linesDejaVu[i] += File.pattern
-                
-                # On réécrit le fichier : destruction
-                self.fichier.seek(0)
-                self.fichier.truncate(0)
-                
-                # Puis réécriture
-                self.fichier.writelines(linesDejaVu)
-                self.fichier.flush()
+                self.writelines(linesDejaVu)
                 
                 File.mutex.setMutex(self.nom, False)
                 return True
