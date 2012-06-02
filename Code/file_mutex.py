@@ -55,21 +55,27 @@ class File :
             
         
     # Retourne True si le message a bien été écrit.
-    def write(self, message) :
-        t0 = clock()
+    def write(self, message, noRepetition = True) :
         
+        t0 = clock()
         while (clock() <= t0 + File.timeout) :
             # On checke le mutex
             if not File.mutex.getMutex(self.nom) :
-                print "Ecriture du message..."
+                
                 # On met le mutex à True
                 File.mutex.setMutex(self.nom, True)
-                # On va à la fin du fichier
-                self.fichier.seek(0,2)
-                # Pour écrire le message
-                self.fichier.write(str(message) + File.pattern)
-                # On force l'écriture
-                self.fichier.flush()
+                self.fichier.seek(0)
+                lines = self.fichier.readlines()
+                
+                if ((not (message + File.pattern) in lines) and noRepetition) or not noRepetition : 
+                
+                    print "Ecriture du message..."
+                    # On va à la fin du fichier
+                    self.fichier.seek(0,2)
+                    # Pour écrire le message
+                    self.fichier.write(str(message) + File.pattern)
+                    # On force l'écriture
+                    self.fichier.flush()
                 # On remet le mutex à False
                 File.mutex.setMutex(self.nom, False)
                 return True
