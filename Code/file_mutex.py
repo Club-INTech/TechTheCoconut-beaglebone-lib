@@ -2,8 +2,7 @@
 
 # Convention : Mutex à 1 <-> PAS POSSIBLE D'ECRIRE.
 
-from time import clock
-
+from threading import Lock
 
 # Classe de mutex de file
 class MutexFile :
@@ -19,16 +18,16 @@ class MutexFile :
     def addMutex(self, nom) :
         # Ajout du mutex s'il n'existe pas déjà.
         if not nom in MutexFile.mutex :
-            MutexFile.mutex.update({nom:False})
+            lock = Lock()
+            MutexFile.mutex.update({nom:lock})
             return False
         return True
-            
-        
-    def getMutex(self, nom) :
-        return MutexFile.mutex[nom]
-        
-    def setMutex(self, nom, etat) :
-        MutexFile.mutex[nom] = etat
+    
+
+    def acquire(self, nom) :
+        MutexFile.mutex[nom].acquire()
+    def release(self, nom) :
+        MutexFile.mutex[nom].release()
     
 class File :
     # L'argument deleteAll détermine si oui ou non on veut supprimer les données
@@ -58,31 +57,23 @@ class File :
     # Retourne True si le message a bien été écrit.
     def write(self, message, noRepetition = True) :
         
-        t0 = clock()
-        while (clock() <= t0 + File.timeout) :
-            # On checke le mutex
-            if not File.mutex.getMutex(self.nom) :
-                
-                lines = self.readlines()
-                # On met le mutex à True
-                File.mutex.setMutex(self.nom, True)
-                
-                if ((not message in lines) and noRepetition) or not noRepetition : 
-                
-                    print "Ecriture du message..."
-                    # On va à la fin du fichier
-                    self.fichier.seek(0,2)
-                    # Pour écrire le message
-                    self.fichier.write(str(message) + File.pattern)
-                    # On force l'écriture
-                    self.fichier.flush()
-                # On remet le mutex à False
-                File.mutex.setMutex(self.nom, False)
-                return True
+        File.mutex.acquire(self.nom)
         
-        # si le timeout est dépassé :
-        print "Timeout dépassé !"
-        return False
+        lines = self.readlines()
+        
+        if ((not message in lines) and noRepetition) or not noRepetition : 
+        
+            print "Ecriture du message..."
+            # On va à la fin du fichier
+            self.fichier.seek(0,2)
+            # Pour écrire le message
+            self.fichier.write(str(message) + File.pattern)
+            # On force l'écriture
+            self.fichier.flush()
+        
+        # On rend le mutex
+        File.mutex.release(self.nom)
+
         
     # WARNING cette fonction ne checke pas le mutex. Elle doit donc être
     # placés à l'intérieur d'un bloc sous l'influence du mutex
@@ -111,56 +102,45 @@ class File :
     # Permet d'enlever le message "message" du fichier.
     # Retourne True si le message a bien été enlevé du fichier.
     def remove(self, message) :
-        linesToDelete = []
-        t0 = clock()
         
-        while clock() <= t0 + File.timeout :
-            # On checke le Mutex: 
-            if not File.mutex.getMutex(self.nom) :
+        linesToDelete = []
+        File.mutex.acquire(self.nom)
+        
+        lines = self.readlines()
+        
+        # On cherche les lignes où apparaît le message :
+        for i in range(len(lines)) :
+            if lines[i] == message :
+                linesToDelete.append(i - len(linesToDelete))
+                
+        # on détruit ces lignes :
+        for i in range(len(linesToDelete)) :
+            del lines[linesToDelete[i]]
+            
+        self.writelines(lines)
+        
+        File.mutex.release(self.nom)
 
-                lines = self.readlines()
-                File.mutex.setMutex(self.nom, True)
-                
-                # On cherche les lignes où apparaît le message :
-                for i in range(len(lines)) :
-                    if lines[i] == message :
-                        linesToDelete.append(i - len(linesToDelete))
-                        
-                # on détruit ces lignes :
-                for i in range(len(linesToDelete)) :
-                    del lines[linesToDelete[i]]
-                    
-                self.writelines(lines)
-                    
-                File.mutex.setMutex(self.nom, False)
-                return True
-                
-        print "Timeout dépassé !"
-        return False
         
     # Proprifie le fichier (i.e. enlève les doublons et les lignes vides)
     def clean(self) :
-        t0 = clock()
         # Contient l'indices de lignes à détruire
         linesToDelete = []
         # Contient les lignes du fichier mais sans les doublons
         linesDejaVu   = []
         
-        while clock() <= t0 + File.timeout :
-            if not File.mutex.getMutex(self.nom) :
-                lines = self.readlines()
-                File.mutex.setMutex(self.nom, True)
+        File.mutex.acquire(self.nom)
+
+        lines = self.readlines()
+        
+        for i in range(len(lines)) :
+            if (not lines[i] in linesDejaVu) and lines[i] != "" :
+                linesDejaVu.append(lines[i])
                 
-                for i in range(len(lines)) :
-                    if (not lines[i] in linesDejaVu) and lines[i] != "" :
-                        linesDejaVu.append(lines[i])
-                        
-                self.writelines(linesDejaVu)
-                
-                File.mutex.setMutex(self.nom, False)
-                return True
-        print "Timeout dépassé !"
-        return False
+        self.writelines(linesDejaVu)
+        
+        File.mutex.release(self.nom)
+
         
             
             
