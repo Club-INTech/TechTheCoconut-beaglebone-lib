@@ -16,6 +16,7 @@
 #include <stdint.h>
 #include <string>
 #include "register.h"
+#include <pthread.h>
 
 namespace BeagleLib{
   
@@ -97,6 +98,7 @@ namespace BeagleLib{
   
    struct GPIO_Descriptor{
     int mux;
+    int export_no;
     uint32_t bit_value;
     std::string pinmux_filename;
    };
@@ -121,12 +123,43 @@ namespace BeagleLib{
       void toggle();
   };
   
+  class InterruptHandler{
+  private:
+    struct pthread_arguments{
+      InterruptHandler* handler;
+      int fd;
+    };
+    unsigned int timeout_;
+    void (*callback_interrupt_)(void) ;
+    void (*callback_timeout_)(void);
+    pthread_arguments args;
+    pthread_t thread_;
+  private:
+    inline void init();
+    void * interrupt_loop(int gpio_fd);
+    static void * pthread_helper(void* args);
+  public:
+    InterruptHandler(unsigned int timeout = 3000);
+    InterruptHandler(void (*callback_interrupt)(void), unsigned int timeout);
+    InterruptHandler(void (*callback_interrupt)(void) , void (*callback_timeout)(void) , unsigned int timeout);
+    void set_callback_interrupt(void (*f)(void));
+    void set_callback_timeout(void (*f)(void));
+    bool is_bound();
+    void start_interrupt(const char * gpio_path);
+    void stop_interrupt();
+  };
+  
   template<>
   class GPIO<INPUT>{
   private:
-      GPIO_NAME name_;  
+      GPIO_NAME name_;
+      pthread_t callback_;
+      InterruptHandler interrupt_;
   public:
       GPIO(GPIO_NAME name, PULL PullMode = PULLDOWN);
+      ~GPIO();
+      void start_interrupt(InterruptHandler interrupt);
+      void stop_interrupt();
       DigitalState read();
   };
 
