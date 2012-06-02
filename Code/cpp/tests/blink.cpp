@@ -14,7 +14,6 @@ int main(){
     led1.toggle();
     led2.toggle();
     sleep(1);
-    std::cout << "BLINK" << std::endl;
   }
 
 }

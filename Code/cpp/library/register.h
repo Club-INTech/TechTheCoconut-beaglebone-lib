@@ -18,11 +18,13 @@
 #include <iostream>
 #include <cmath>
 
+#define MMAP_OFFSET 0x44c00000
+#define MMAP_SIZE   (0x48ffffff - MMAP_OFFSET)
+#define REG_OFFSET(addr) ( (addr) - MMAP_OFFSET )
 namespace BeagleLib{
 
 
-     static const unsigned int MMAP_OFFSET = 0x44c00000 ;
-     static const unsigned int MMAP_SIZE   = 0x48ffffff-MMAP_OFFSET;
+
        
     class MMapHandler{
     private:

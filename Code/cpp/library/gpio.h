@@ -94,39 +94,9 @@ namespace BeagleLib{
     LOW = 0,
     HIGH = 1
   };
-
-  enum GPIO_REGISTERS{
-    GPIO_OE           = 0x134,
-    GPIO_DATAIN       = 0x138,
-    GPIO_DATAOUT      = 0x13c,
-    GPIO_CLEARDATAOUT = 0x190,
-    GPIO_SETDATAOUT   = 0x194
-  };
-      
-   enum GPIO_MUX{
-    GPIO0 = 0x44e07000-MMAP_OFFSET,
-    GPIO1 = 0x4804c000-MMAP_OFFSET,
-    GPIO2 = 0x481ac000-MMAP_OFFSET,
-    GPIO3 = 0x481ae000-MMAP_OFFSET
-   };
-   
-
-   
-   enum GPIO_BITS{
-    CONF_SLEW_SLOW    = 1<<6,
-    CONF_RX_ACTIVE    = 1<<5,
-    CONF_PULLUP       = 1<<4,
-    CONF_PULL_DISABLE = 1<<3
-   };
-
-  enum CONF_GPIO{
-    CONF_GPIO_MODE    = 0x07,
-    CONF_GPIO_OUTPUT = CONF_GPIO_MODE,
-    CONF_GPIO_INPUT  = CONF_GPIO_MODE+CONF_RX_ACTIVE
-  };
   
    struct GPIO_Descriptor{
-    GPIO_MUX mux;
+    int mux;
     uint32_t bit_value;
     std::string pinmux_filename;
    };
