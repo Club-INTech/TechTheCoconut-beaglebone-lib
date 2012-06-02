@@ -62,12 +62,12 @@ class File :
             # On checke le mutex
             if not File.mutex.getMutex(self.nom) :
                 
+                lines = self.readlines()
+                print lines
                 # On met le mutex à True
                 File.mutex.setMutex(self.nom, True)
-                self.fichier.seek(0)
-                lines = self.fichier.readlines()
                 
-                if ((not (message + File.pattern) in lines) and noRepetition) or not noRepetition : 
+                if ((not message in lines) and noRepetition) or not noRepetition : 
                 
                     print "Ecriture du message..."
                     # On va à la fin du fichier
@@ -83,6 +83,24 @@ class File :
         # si le timeout est dépassé :
         print "Timeout dépassé !"
         return False
+        
+    def readlines(self) :
+        t0 = clock()
+        
+        while clock() <= t0 + File.timeout :
+            if not File.mutex.getMutex(self.nom):
+                File.mutex.setMutex(self.nom, True)
+                self.fichier.seek(0)
+                lines = self.fichier.readlines()
+                
+                for i in range(len(lines)) :
+                    if lines[i][-1] == File.pattern :
+                        lines[i] = lines[i][0:len(lines[i])-1]
+                File.mutex.setMutex(self.nom, False)
+                return lines
+                
+        print "Timeout dépassé !"
+        return False
     
         
     # Permet d'enlever le message "message" du fichier.
@@ -94,14 +112,13 @@ class File :
         while clock() <= t0 + File.timeout :
             # On checke le Mutex: 
             if not File.mutex.getMutex(self.nom) :
+
+                lines = self.readlines()
                 File.mutex.setMutex(self.nom, True)
-                # On remonte au début du fichier
-                self.fichier.seek(0)
                 
-                lines = self.fichier.readlines()
                 # On cherche les lignes où apparaît le message :
                 for i in range(len(lines)) :
-                    if lines[i] == (message + "\n") :
+                    if lines[i] == message :
                         linesToDelete.append(i - len(linesToDelete))
                         
                 # on détruit ces lignes :
@@ -109,6 +126,10 @@ class File :
                     print "Destruction de la ligne n°"+str(linesToDelete[i])
                     del lines[linesToDelete[i]]
                     print lines
+                    
+                # On rajoute le pattern à la fin de chaque lignes
+                for i in range(len(lines)) :
+                    lines[i] += File.pattern
                     
                 # On réécrit le fichier : destruction
                 self.fichier.seek(0)
