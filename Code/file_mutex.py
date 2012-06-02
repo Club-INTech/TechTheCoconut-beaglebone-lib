@@ -2,6 +2,8 @@
 
 # Convention : Mutex à 1 <-> PAS POSSIBLE D'ECRIRE.
 
+from time import clock
+
 # Classe de mutex de file
 class MutexFile :
     def __init__(self):
@@ -35,6 +37,7 @@ class File :
         if not hasattr(File, "mutex") :
             File.mutex = MutexFile()
             File.pattern = "\n"
+            File.timeout = 1 #second
         
         self.nom = nom
         
@@ -51,50 +54,69 @@ class File :
             print "Impossible d'ouvrir le fichier " + nom + "."
             
         
+    # Retourne True si le message a bien été écrit.
     def write(self, message) :
-        # On checke le mutex
-        if not File.mutex.getMutex(self.nom) :
-            print "Ecriture du message..."
-            # On met le mutex à True
-            File.mutex.setMutex(self.nom, True)
-            # On va à la fin du fichier
-            self.fichier.seek(0,2)
-            # Pour écrire le message
-            self.fichier.write(str(message) + File.pattern)
-            # On force l'écriture
-            self.fichier.flush()
-            # On remet le mutex à False
-            File.mutex.setMutex(self.nom, False)
+        t0 = clock()
+        
+        while (clock() <= t0 + File.timeout) :
+            # On checke le mutex
+            if not File.mutex.getMutex(self.nom) :
+                print "Ecriture du message..."
+                # On met le mutex à True
+                File.mutex.setMutex(self.nom, True)
+                # On va à la fin du fichier
+                self.fichier.seek(0,2)
+                # Pour écrire le message
+                self.fichier.write(str(message) + File.pattern)
+                # On force l'écriture
+                self.fichier.flush()
+                # On remet le mutex à False
+                File.mutex.setMutex(self.nom, False)
+                return True
+        
+        # si le timeout est dépassé :
+        print "Timeout dépassé !"
+        return False
     
+        
     # Permet d'enlever le message "message" du fichier.
+    # Retourne True si le message a bien été enlevé du fichier.
     def remove(self, message) :
         linesToDelete = []
+        t0 = clock()
         
-        # On checke le Mutex: 
-        if not File.mutex.getMutex(self.nom) :
-            File.mutex.setMutex(self.nom, True)
-            # On remonte au début du fichier
-            self.fichier.seek(0)
-            
-            lines = self.fichier.readlines()
-            # On cherche les lignes où apparaît le message :
-            for i in range(len(lines)) :
-                if lines[i] == (message + "\n") :
-                    linesToDelete.append(i - len(linesToDelete))
+        while clock() <= t0 + File.timeout :
+            # On checke le Mutex: 
+            if not File.mutex.getMutex(self.nom) :
+                File.mutex.setMutex(self.nom, True)
+                # On remonte au début du fichier
+                self.fichier.seek(0)
+                
+                lines = self.fichier.readlines()
+                # On cherche les lignes où apparaît le message :
+                for i in range(len(lines)) :
+                    if lines[i] == (message + "\n") :
+                        linesToDelete.append(i - len(linesToDelete))
+                        
+                # on détruit ces lignes :
+                for i in range(len(linesToDelete)) :
+                    print "Destruction de la ligne n°"+str(linesToDelete[i])
+                    del lines[linesToDelete[i]]
+                    print lines
                     
-            # on détruit ces lignes :
-            for i in range(len(linesToDelete)) :
-                print "Destruction de la ligne n°"+str(linesToDelete[i])
-                del lines[linesToDelete[i]]
-                print lines
+                # On réécrit le fichier : destruction
+                self.fichier.seek(0)
+                self.fichier.truncate(0)
                 
-            # On réécrit le fichier
-            self.fichier.seek(0)
-            self.fichier.truncate(0)
-            self.fichier.writelines(lines)
-            self.fichier.flush()
+                # Puis réécriture
+                self.fichier.writelines(lines)
+                self.fichier.flush()
+                    
+                File.mutex.setMutex(self.nom, False)
+                return True
                 
-            File.mutex.setMutex(self.nom, False)
+        print "Timeout dépassé !"
+        return False
             
             
     def close(self) :
