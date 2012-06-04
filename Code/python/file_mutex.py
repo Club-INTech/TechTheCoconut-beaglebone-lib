@@ -190,6 +190,11 @@ class File :
         self.writelines(lines)
         
         File.mutex.release(self.nom)
+        
+    # Efface le contenu du fichier.
+    def clearFile(self) :
+        self.fichier.seek(0)
+        self.fichier.truncate(0)
 
         
     # Proprifie le fichier (i.e. enlève les doublons et les lignes vides)
