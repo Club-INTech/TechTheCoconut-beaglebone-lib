@@ -13,4 +13,8 @@ void callback_timeout(){
 int main(){
   GPIO< INPUT > gpio(GPIO1_1);
   gpio.start_interrupt(InterruptHandler(callback_interrupt,callback_timeout));
+  while(1){
+    std::cout << "Waiting..." << std::endl;
+    sleep(1);
+  }
 }

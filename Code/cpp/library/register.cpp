@@ -96,6 +96,21 @@ namespace BeagleLib{
       and_reg(address,~mask);
     }
     
+    void set_bit(uint32_t address, uint8_t n)
+    {
+      or_reg(address, (1 << n) );
+    }
+
+    uint8_t get_bit(uint32_t address, uint8_t n)
+    {
+      return get_reg(address) & (1 << n);
+    }
+
+    void clear_bit(uint32_t address, uint8_t n)
+    {
+      and_reg(address, ~(1 << n) );
+    }
+
     void pin_mux(std::string const & fn, unsigned int mode){
       std::string path = "/sys/kernel/debug/omap_mux/";
       path+=fn;

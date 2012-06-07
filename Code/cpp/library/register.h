@@ -40,13 +40,18 @@ namespace BeagleLib{
     inline void endian_swap(uint32_t& x);
     inline void to_little_endian(uint32_t& x);
     inline void to_big_endian(uint32_t& x);
-    
+
     void set_reg(uint32_t address, uint32_t new_value);
     uint32_t get_reg(uint32_t address);
     void or_reg(uint32_t address, uint32_t mask);
     void and_reg(uint32_t address, uint32_t mask);
     void xor_reg(uint32_t address, uint32_t mask);
     void clear_reg(uint32_t address, uint32_t mask);
+    
+    void set_bit(uint32_t address, uint8_t n);
+    uint8_t get_bit(uint32_t address, uint8_t n);
+    void clear_bit(uint32_t address, uint8_t n);
+    
     void pin_mux(std::string const & fn, unsigned int mode);
 }
 #endif

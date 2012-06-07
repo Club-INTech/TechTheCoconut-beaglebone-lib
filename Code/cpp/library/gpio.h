@@ -139,9 +139,9 @@ namespace BeagleLib{
     void * interrupt_loop(int gpio_fd);
     static void * pthread_helper(void* args);
   public:
+    InterruptHandler(void (*callback_interrupt)(void) , void (*callback_timeout)(void) , unsigned int timeout = 3000);
+    InterruptHandler(void (*callback_interrupt)(void), unsigned int timeout = 3000);
     InterruptHandler(unsigned int timeout = 3000);
-    InterruptHandler(void (*callback_interrupt)(void), unsigned int timeout);
-    InterruptHandler(void (*callback_interrupt)(void) , void (*callback_timeout)(void) , unsigned int timeout);
     void set_callback_interrupt(void (*f)(void));
     void set_callback_timeout(void (*f)(void));
     bool is_bound();

@@ -7,11 +7,34 @@
 #ifndef EQEP_HPP
 #define EQEP_HPP
 
-#include "register.hpp"
+#include "register.h"
+
+//EQEP 1:
+//	A : GPIO1_20
+//	B : GPIO1_21
+
+//EQEP 2:
+//	A : GPIO1_12
+//	B : GPIO1_13
+
 
 namespace BeagleLib{
 
+
   
+  enum EQEP_ID{
+    EQEP0 = 0,
+    EQEP1 = 1,
+    EQEP2 = 2
+  };
+  
+  class EQEP{
+  private:
+    EQEP_ID id_;
+  public:
+    EQEP(EQEP_ID id);
+    int32_t value();
+  };
   
 }
 
